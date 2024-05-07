@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -7,13 +6,13 @@ import Paginator from "./ui/Paginator";
 import axiosInstance from "../config/axios.config";
 import Modal from "./ui/Modal";
 import { useTranslation } from "react-i18next";
-import toast , {Toaster} from "react-hot-toast"
-
+import toast, { Toaster } from "react-hot-toast";
+import * as yup from "yup";
 
 export default function Cards() {
   const { t } = useTranslation();
 
-  // STATE
+  // State and variables
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,28 +35,24 @@ export default function Cards() {
 
   const dispatch = useDispatch();
 
-  const onCloseAddModal = () => {
-    setIsOpenAddModal(false);
-    setCurrentStep(1);
-    setFormData({
-      title: "",
-      price: 0, // Initialize price as a number
-      description: "",
-      image: "",
-      category: "",
-    });
-    setErrors({});
-  };
+  // Validation schema
+  const schema = yup.object().shape({
+    title: yup
+      .string()
+      .required()
+      .min(5, t("Title should be at least 5 characters")),
+    price: yup.number().required().max(99999, t("Price should be less than 99999")),
+    description: yup
+      .string()
+      .required()
+      .min(10, t("Description should be at least 10 characters")),
+    image: yup.string().required(),
+    category: yup.string().required(),
+  });
 
-  const onOpenAddModal = () => {
-    setIsOpenAddModal(true);
-  };
-
-  const handleNextStep = () => {
-    if (currentStep === 1) {
-      const isValid = validateStep1();
-      if (isValid) setCurrentStep(currentStep + 1);
-    }
+  const handleNextStep = async () => {
+    console.log("Current Step:", currentStep);
+    setCurrentStep(currentStep + 1);
   };
 
   const handlePrevStep = () => {
@@ -65,67 +60,67 @@ export default function Cards() {
   };
 
   const handleChange = (e) => {
-    if (e.target.name === "category") {
-      setFormData({ ...formData, category: e.target.value });
-    } else {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
-  };
-
-  const validateStep1 = () => {
-    let errors = {};
-    if (!formData.title || formData.title.length < 5) {
-      errors.title = t("Title is required and should be at least 5 characters");
-    }
-    if (isNaN(formData.price) || formData.price.length > 5) {
-      errors.price = t("Price should be a number with maximum length of 5");
-    }
-    setErrors(errors);
-    return Object.keys(errors).length === 0;
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    // Check validity of the field
+    schema
+      .validateAt(name, { ...formData, [name]: value })
+      .then(() => {
+        // Field is valid, clear error
+        setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
+      })
+      .catch((error) => {
+        // Field is invalid, set error message
+        setErrors((prevErrors) => ({ ...prevErrors, [name]: error.message }));
+      });
   };
 
   const handleAddProduct = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent default form submission
+  
     if (currentStep === 2) {
-      const isValid = validateStep2();
+      const isValid = validateStep2(); // Validate form fields
       if (isValid) {
         try {
-          // Parse the price value as a number
-          const price = parseFloat(formData.price);
-
-          // Check if the price is a valid number
+          const price = parseFloat(formData.price); // Parse price as a number
+  
           if (isNaN(price)) {
+            // Check if price is a valid number
             setErrors({ price: t("Price should be a number") });
             return;
           }
-
-          // Send the parsed price value in the request
+  
+          // Send product data to the server
           const res = await axiosInstance.post("/products", { ...formData, price });
           console.log(res.data);
-          setProducts([...products, res.data]);
-          setIsOpenAddModal(false);
-          setCurrentStep(1);
-          setFormData({
+          setProducts([...products, res.data]); // Update products state
+          setIsOpenAddModal(false); // Close modal
+          setCurrentStep(1); // Reset current step
+          setFormData({ // Clear form data
             title: "",
             price: 0,
             description: "",
             image: "",
             category: "",
           });
-          toast("Product has been Added  successfully!", {
+  
+          // Display success message
+          toast("Product has been added successfully!", {
             icon: "👏",
             style: {
               backgroundColor: "black",
               color: "white",
-            },  
+            },
           });
-          setErrors({});
+  
+          setErrors({}); // Clear any previous errors
         } catch (error) {
-          console.error(error);
+          console.error(error); // Log any errors
         }
       }
     }
   };
+  
 
   const validateStep2 = () => {
     let errors = {};
@@ -141,7 +136,7 @@ export default function Cards() {
     return Object.keys(errors).length === 0;
   };
 
-  //Fetch the products
+  // Fetch the products
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -220,6 +215,7 @@ export default function Cards() {
     });
   };
 
+  // JSX
   return (
     <div style={{ minHeight: "91vh" }} className="bg-gray-800">
       <div className="w-full bg-gray-800">
@@ -286,14 +282,14 @@ export default function Cards() {
             </div>
             <button
               className="px-3 py-3 font-medium text-white duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
-              onClick={() => onOpenAddModal()}
+              onClick={() => setIsOpenAddModal(true)}
             >
               {t("Add Product")}
             </button>
             {/* Add Product Modal */}
             <Modal
               isOpen={isOpenAddModal}
-              closeModal={onCloseAddModal}
+              closeModal={() => setIsOpenAddModal(false)}
               title={t("Add a new Product")}
             >
               {currentStep === 1 && (
@@ -317,9 +313,9 @@ export default function Cards() {
                   />
                   {errors.price && <p className="text-red-600">{errors.price}</p>}
                   <button
-                    className="px-3 py-3 font-medium duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
-                    onClick={handleNextStep}
-                    disabled={Object.keys(errors).length > 0}
+                    className="px-3 py-3 mx-5 font-medium text-white duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
+                    onClick={handleNextStep} // Call handleNextStep function
+                    disabled={errors.title || errors.price}
                   >
                     {t("Next")}
                   </button>
@@ -370,9 +366,10 @@ export default function Cards() {
                     {t("Previous")}
                   </button>
                   <button
+                    type="submit"
                     className="px-3 py-3 mx-5 font-medium text-white duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
                     onClick={handleAddProduct}
-                    disabled={Object.keys(errors).length > 0}
+                   
                   >
                     {t("Add product")}
                   </button>
@@ -425,7 +422,7 @@ export default function Cards() {
             paginate={paginate}
           />
         </section>
-        <Toaster/>
+        <Toaster />
       </div>
     </div>
   );

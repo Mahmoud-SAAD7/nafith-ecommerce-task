@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   removeFromCart,
@@ -6,13 +7,23 @@ import {
   clearCart,
 } from "../redux/cartSlice";
 import { useTranslation } from "react-i18next";
-import toast , {Toaster} from "react-hot-toast"
-
+import toast , {Toaster} from "react-hot-toast";
 
 function Cart() {
   const { t } = useTranslation();
   const cart = useSelector((state) => state.cart);
   const dispatch = useDispatch();
+
+  // Load cart from local storage when component mounts
+  useEffect(() => {
+    const cartFromLocalStorage = localStorage.getItem("cart");
+    if (cartFromLocalStorage) {
+      dispatch({
+        type: "cart/setCart",
+        payload: JSON.parse(cartFromLocalStorage),
+      });
+    }
+  }, [dispatch]);
 
   // Function to handle removing a product from cart
   const handleRemoveFromCart = (productId) => {
