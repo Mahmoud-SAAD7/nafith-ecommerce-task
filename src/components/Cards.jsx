@@ -7,8 +7,8 @@ import Paginator from "./ui/Paginator";
 import axiosInstance from "../config/axios.config";
 import Modal from "./ui/Modal";
 import { useTranslation } from "react-i18next";
-import { ToastContainer, toast } from "react-toastify";
-import { Toaster } from "react-hot-toast";
+import toast , {Toaster} from "react-hot-toast"
+
 
 export default function Cards() {
   const { t } = useTranslation();
@@ -25,7 +25,7 @@ export default function Cards() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     title: "",
-    price: "",
+    price: 0, // Initialize price as a number
     description: "",
     image: "",
     category: "",
@@ -41,7 +41,7 @@ export default function Cards() {
     setCurrentStep(1);
     setFormData({
       title: "",
-      price: "",
+      price: 0, // Initialize price as a number
       description: "",
       image: "",
       category: "",
@@ -90,19 +90,35 @@ export default function Cards() {
       const isValid = validateStep2();
       if (isValid) {
         try {
-          const res = await axiosInstance.post("/products", formData);
+          // Parse the price value as a number
+          const price = parseFloat(formData.price);
+
+          // Check if the price is a valid number
+          if (isNaN(price)) {
+            setErrors({ price: t("Price should be a number") });
+            return;
+          }
+
+          // Send the parsed price value in the request
+          const res = await axiosInstance.post("/products", { ...formData, price });
           console.log(res.data);
           setProducts([...products, res.data]);
           setIsOpenAddModal(false);
           setCurrentStep(1);
           setFormData({
             title: "",
-            price: "",
+            price: 0,
             description: "",
             image: "",
             category: "",
           });
-          alert("Product added successfully");
+          toast("Product has been Added  successfully!", {
+            icon: "👏",
+            style: {
+              backgroundColor: "black",
+              color: "white",
+            },  
+          });
           setErrors({});
         } catch (error) {
           console.error(error);
@@ -195,8 +211,13 @@ export default function Cards() {
 
   const handleAddToCart = (product) => {
     dispatch(addToCart(product));
-    toast.success("product added !");
-    alert("added to cart");
+    toast("Product has been Added to cart successfully!", {
+      icon: "👏",
+      style: {
+        backgroundColor: "green",
+        color: "white",
+      },
+    });
   };
 
   return (

@@ -6,6 +6,8 @@ import {
   clearCart,
 } from "../redux/cartSlice";
 import { useTranslation } from "react-i18next";
+import toast , {Toaster} from "react-hot-toast"
+
 
 function Cart() {
   const { t } = useTranslation();
@@ -15,6 +17,7 @@ function Cart() {
   // Function to handle removing a product from cart
   const handleRemoveFromCart = (productId) => {
     dispatch(removeFromCart(productId));
+    toast.error(t("Removed from cart !"))
   };
 
   // Function to handle increasing the quantity of a product
@@ -36,7 +39,7 @@ function Cart() {
   // Function to handle checkout
   const handleCheckout = () => {
     dispatch(clearCart());
-    alert("checkout successful");
+    toast.success("check out successfully !")
   };
 
   return (
@@ -86,8 +89,8 @@ function Cart() {
                     </button>
                   </div>
                   <div className="flex items-center space-x-4 text-black">
-                    <p className="text-sm">{typeof product.price === 'number' ? `$${product.price.toFixed(2)}` : 'N/A'}</p>
-                    <p className="text-sm">{typeof product.total === 'number' ? `$${product.total.toFixed(2)}` : 'N/A'}</p>
+                    <p className="text-sm">${+product.price}</p>
+                    <p className="text-sm">${product.total}</p>
                     <button
                       className="text-sm text-red-500"
                       onClick={() => handleRemoveFromCart(product.id)}
@@ -112,6 +115,7 @@ function Cart() {
           </div>
         </div>
       </div>
+      <Toaster/>
     </div>
   );
 }

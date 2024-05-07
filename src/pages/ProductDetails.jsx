@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/cartSlice";
+import toast , {Toaster} from "react-hot-toast"
+
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -12,6 +14,7 @@ export default function ProductDetails() {
   const dispatch = useDispatch();
   const handleAddToCart = (product) => {
     dispatch(addToCart(product));
+    toast.success(t("Added to cart !"));
   };
 
   useEffect(() => {
@@ -63,6 +66,7 @@ export default function ProductDetails() {
           </div>
         </div>
       </section>
+      <Toaster/>
     </div>
   );
 }

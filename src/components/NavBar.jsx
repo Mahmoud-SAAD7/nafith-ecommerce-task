@@ -1,10 +1,40 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import { ShoppingCart } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import LanguageDetector from "i18next-browser-languagedetector";
+import HttpApi from "i18next-http-backend";
+import { useEffect } from "react";
+import Cookies from "js-cookie";
+
+
+i18n
+  .use(initReactI18next)
+  .use(LanguageDetector)
+  .use(HttpApi) // passes i18n down to react-i18next
+  .init({
+    fallbackLng: "en",
+    detection: {
+      order: ["cookie", "htmlTag", "localStorage", "path", "subdomain"],
+      caches: ["cookie"],
+    },
+    backend: {
+      loadPath: "/locale/{{lng}}/translation.json",
+    },
+  });
 
 export default function NavBar() {
-  const { t, i18n } = useTranslation(); // Access t function and i18n instance
+  const { t, i18n } = useTranslation(); 
+  const lng = Cookies.get("i18next") || "en";
+
+  useEffect(() => {
+    window.document.dir = i18n.dir(lng);
+    i18n.changeLanguage(lng);
+  }, [lng]);
+  // Access t function and i18n instance
 
   // Function to handle language change
   const handleChangeLanguage = (e) => {
