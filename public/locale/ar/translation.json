@@ -39,5 +39,10 @@
   "About": " عن الشركة",
   "Services": "الخدمات",
   "Contact": "اتصل بنا",
-  "Why Us": "لماذا نحن"
+  "Why Us": "لماذا نحن",
+  "Sort By": "ترتيب بــ",
+  "Ascending" : " تصاعدي",
+  "Descending" : "تنازلي",
+  "None": "بلا"
+
 }

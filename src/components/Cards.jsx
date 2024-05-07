@@ -28,6 +28,8 @@ export default function Cards() {
     category: "",
   });
   const [errors, setErrors] = useState({});
+  const [sortBy, setSortBy] = useState("none");
+  const [sortedProducts, setSortedProducts] = useState([]);
 
   const dispatch = useDispatch();
 
@@ -119,7 +121,7 @@ export default function Cards() {
         const { data } = await axiosInstance.get("/products");
         setProducts(data);
         setFilteredProducts(data);
-        console.log(data)
+        setSortedProducts(data); // Initialize sorted products with the fetched data
       } catch (error) {
         console.log(error);
       }
@@ -143,17 +145,34 @@ export default function Cards() {
     setFilteredProducts(filteredBySearch);
   }, [minPrice, categoryFilter, searchQuery, products]);
 
+  // Sort products based on sortBy state
+  useEffect(() => {
+    if (sortBy === "none") {
+      setSortedProducts(filteredProducts);
+    } else {
+      const sorted = [...filteredProducts];
+      sorted.sort((a, b) => {
+        if (sortBy === "asc") {
+          return a.price - b.price;
+        } else {
+          return b.price - a.price;
+        }
+      });
+      setSortedProducts(sorted);
+    }
+  }, [sortBy, filteredProducts]);
+  
+
   // Get current products for pagination
   const indexOfLastProduct = currentPage * productsPerPage;
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(
+  const currentProducts = sortedProducts.slice(
     indexOfFirstProduct,
     indexOfLastProduct
   );
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
 
   const shortenTitle = (title) => {
     const words = title.split(" ");
@@ -185,6 +204,19 @@ export default function Cards() {
           </div>
           <div className="flex-col justify-between mb-4 space-y-5 md:flex">
             <div className="flex justify-between">
+              <div className="text-white sort-by ">
+                <label htmlFor="sortBy">{t("Sort By")}</label>
+                <select 
+                  id="sortBy"
+                  className="border-[1px] border-gray-300 shadow-lg focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600 rounded-lg px-3 py-3 text-md w-1/2 bg-transparent text-slate-500"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
+                  <option value="none">{t("None")}</option>
+                  <option value="asc">{t("Ascending")}</option>
+                  <option value="desc">{t("Descending")}</option>
+                </select>
+              </div>
               <div>
                 <label htmlFor="category" className="mr-2 font-semibold text-white">
                   {t("Category")}:
