@@ -12,8 +12,10 @@ import i18n from "i18next";
 import {  initReactI18next } from "react-i18next";
 import LanguageDetector from 'i18next-browser-languagedetector';
 import HttpApi from 'i18next-http-backend';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
+import { ToastContainer } from "react-toastify";
+import NotFound from "./pages/NotFound";
 i18n
   .use(initReactI18next).use(LanguageDetector).use(HttpApi) // passes i18n down to react-i18next
   .init({
@@ -29,20 +31,32 @@ i18n
   });
 
 function App() {
-  const lng = Cookies.get("i18next") || "en"
-  useEffect(()=>{
-    window.document.dir = i18n.dir()
-  },[lng])
+  const lng = Cookies.get("i18next") || "en";
+  const [reloadPage, setReloadPage] = useState(false);
+
+
+  useEffect(() => {
+    window.document.dir = i18n.dir();
+    i18n.changeLanguage(lng);
+    if (reloadPage) {
+      window.location.reload(); 
+      setReloadPage(false); 
+    }
+    
+  }, [lng,reloadPage]);
+
   return (
     <>
       <Provider store={store}>
         <BrowserRouter>
           <NavBar />
-         
+      <ToastContainer />
+
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path={`/products/:id`} element={<ProductDetails />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="*" element={<NotFound/>} />
           </Routes>
           <Footer />
         </BrowserRouter>

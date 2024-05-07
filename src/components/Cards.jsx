@@ -8,7 +8,7 @@ import axiosInstance from "../config/axios.config";
 import Modal from "./ui/Modal";
 import { useTranslation } from "react-i18next";
 import { ToastContainer, toast } from "react-toastify";
-
+import { Toaster } from "react-hot-toast";
 
 export default function Cards() {
   const { t } = useTranslation();
@@ -65,7 +65,11 @@ export default function Cards() {
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (e.target.name === "category") {
+      setFormData({ ...formData, category: e.target.value });
+    } else {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    }
   };
 
   const validateStep1 = () => {
@@ -98,7 +102,7 @@ export default function Cards() {
             image: "",
             category: "",
           });
-          alert("Product added successfully")
+          alert("Product added successfully");
           setErrors({});
         } catch (error) {
           console.error(error);
@@ -110,7 +114,9 @@ export default function Cards() {
   const validateStep2 = () => {
     let errors = {};
     if (!formData.description || formData.description.length < 10) {
-      errors.description = t("Description is required and should be at least 10 characters");
+      errors.description = t(
+        "Description is required and should be at least 10 characters"
+      );
     }
     if (!formData.image) {
       errors.image = t("Image is required");
@@ -166,7 +172,6 @@ export default function Cards() {
       setSortedProducts(sorted);
     }
   }, [sortBy, filteredProducts]);
-  
 
   // Get current products for pagination
   const indexOfLastProduct = currentPage * productsPerPage;
@@ -190,8 +195,8 @@ export default function Cards() {
 
   const handleAddToCart = (product) => {
     dispatch(addToCart(product));
-    toast.success("product added !")
-    alert('added to cart')
+    toast.success("product added !");
+    alert("added to cart");
   };
 
   return (
@@ -213,7 +218,7 @@ export default function Cards() {
             <div className="flex justify-between">
               <div className="text-white sort-by ">
                 <label htmlFor="sortBy">{t("Sort By")}</label>
-                <select 
+                <select
                   id="sortBy"
                   className="border-[1px] border-gray-300 shadow-lg focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600 rounded-lg px-3 py-3 text-md w-1/2 bg-transparent text-slate-500"
                   value={sortBy}
@@ -320,6 +325,22 @@ export default function Cards() {
                     onChange={(e) => handleChange(e)}
                     name="image"
                   />
+                  <select
+                    name="category"
+                    id="category"
+                    className="border-[1px] border-gray-300 shadow-md focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-3 text-md w-full"
+                    value={formData.category}
+                    onChange={(e) => handleChange(e)}
+                  >
+                    <option value="">{t("Category")}</option>
+                    {Array.from(
+                      new Set(products.map((product) => product.category))
+                    ).map((category) => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
                   {errors.image && <p className="text-red-600">{errors.image}</p>}
                   <button
                     className="px-3 py-3 font-medium text-white duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
@@ -383,6 +404,7 @@ export default function Cards() {
             paginate={paginate}
           />
         </section>
+        <Toaster/>
       </div>
     </div>
   );
