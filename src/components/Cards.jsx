@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -6,6 +7,8 @@ import Paginator from "./ui/Paginator";
 import axiosInstance from "../config/axios.config";
 import Modal from "./ui/Modal";
 import { useTranslation } from "react-i18next";
+import { ToastContainer, toast } from "react-toastify";
+
 
 export default function Cards() {
   const { t } = useTranslation();
@@ -95,6 +98,8 @@ export default function Cards() {
             image: "",
             category: "",
           });
+          alert("Product added successfully")
+          setErrors({});
         } catch (error) {
           console.error(error);
         }
@@ -185,6 +190,8 @@ export default function Cards() {
 
   const handleAddToCart = (product) => {
     dispatch(addToCart(product));
+    toast.success("product added !")
+    alert('added to cart')
   };
 
   return (
