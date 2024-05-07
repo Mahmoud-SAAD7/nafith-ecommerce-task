@@ -1,35 +1,135 @@
-/* eslint-disable no-undef */
-/* eslint-disable react/prop-types */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addToCart } from "../redux/cartSlice";
+import Paginator from "./ui/Paginator";
+import axiosInstance from "../config/axios.config";
+import Modal from "./ui/Modal";
+import { useTranslation } from "react-i18next";
 
 export default function Cards() {
+  const { t } = useTranslation();
+
+  // STATE
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(6); // Adjust the number of products per page as needed
+  const [productsPerPage] = useState(6);
   const [minPrice, setMinPrice] = useState(0);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isOpenAddModal, setIsOpenAddModal] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState({
+    title: "",
+    price: "",
+    description: "",
+    image: "",
+    category: "",
+  });
+  const [errors, setErrors] = useState({});
 
   const dispatch = useDispatch();
 
+  const onCloseAddModal = () => {
+    setIsOpenAddModal(false);
+    setCurrentStep(1);
+    setFormData({
+      title: "",
+      price: "",
+      description: "",
+      image: "",
+      category: "",
+    });
+    setErrors({});
+  };
+
+  const onOpenAddModal = () => {
+    setIsOpenAddModal(true);
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 1) {
+      const isValid = validateStep1();
+      if (isValid) setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const validateStep1 = () => {
+    let errors = {};
+    if (!formData.title || formData.title.length < 5) {
+      errors.title = t("Title is required and should be at least 5 characters");
+    }
+    if (isNaN(formData.price) || formData.price.length > 5) {
+      errors.price = t("Price should be a number with maximum length of 5");
+    }
+    setErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    if (currentStep === 2) {
+      const isValid = validateStep2();
+      if (isValid) {
+        try {
+          const res = await axiosInstance.post("/products", formData);
+          console.log(res.data);
+          setProducts([...products, res.data]);
+          setIsOpenAddModal(false);
+          setCurrentStep(1);
+          setFormData({
+            title: "",
+            price: "",
+            description: "",
+            image: "",
+            category: "",
+          });
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    }
+  };
+
+  const validateStep2 = () => {
+    let errors = {};
+    if (!formData.description || formData.description.length < 10) {
+      errors.description = t("Description is required and should be at least 10 characters");
+    }
+    if (!formData.image) {
+      errors.image = t("Image is required");
+    }
+    setErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  //Fetch the products
   useEffect(() => {
-    fetch("https://fakestoreapi.com/products")
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchData = async () => {
+      try {
+        const { data } = await axiosInstance.get("/products");
         setProducts(data);
         setFilteredProducts(data);
-      })
-      .catch((err) => console.log(err));
+        console.log(data)
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchData();
   }, []);
 
   // Filter products by minimum price, category, and search query
   useEffect(() => {
     const filteredByPrice = products.filter((product) => product.price >= minPrice);
-
     const filteredByCategory = categoryFilter
       ? filteredByPrice.filter((product) => product.category === categoryFilter)
       : filteredByPrice;
@@ -54,7 +154,7 @@ export default function Cards() {
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Function to shorten the product title to 10 words
+
   const shortenTitle = (title) => {
     const words = title.split(" ");
     if (words.length <= 10) {
@@ -73,51 +173,131 @@ export default function Cards() {
       <div className="w-full bg-gray-800">
         <section className="max-w-6xl px-4 py-12 mx-auto sm:px-6 lg:px-4">
           {/* Filter Section */}
-          <div className="mb-5 ">
-            <label htmlFor="search" className="mr-2 font-semibold text-white">
-              Search:
-            </label>
+          <div className="flex items-center justify-center mb-5 ">
             <input
               type="text"
               id="search"
-              className="w-[500px] px-2 py-1 text-gray-800 bg-white rounded-md"
+              className="border-[1px] border-gray-300 shadow-lg focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600 rounded-lg px-3 py-3 text-md w-1/2 bg-transparent text-white"
+              placeholder={t("Search for products...")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex justify-between mb-4">
-            <div>
-              <label htmlFor="category" className="mr-2 font-semibold text-white">
-                Category:
-              </label>
-              <select
-                id="category"
-                className="px-2 py-1 text-gray-800 bg-white rounded-md"
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-              >
-                <option value="">All</option>
-                {Array.from(
-                  new Set(products.map((product) => product.category))
-                ).map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+          <div className="flex-col justify-between mb-4 space-y-5 md:flex">
+            <div className="flex justify-between">
+              <div>
+                <label htmlFor="category" className="mr-2 font-semibold text-white">
+                  {t("Category")}:
+                </label>
+                <select
+                  id="category"
+                  className="border-[1px] border-gray-300 shadow-lg focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600 rounded-lg px-3 py-3 text-md w-1/2 bg-transparent text-slate-500"
+                  value={categoryFilter}
+                  onChange={(e) => setCategoryFilter(e.target.value)}
+                >
+                  <option value="">{t("All")}</option>
+                  {Array.from(
+                    new Set(products.map((product) => product.category))
+                  ).map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="price" className="mr-2 font-semibold text-white">
+                  {t("Lowest price")}:
+                </label>
+                <input
+                  type="number"
+                  id="price"
+                  className="border-[1px] border-gray-300 shadow-lg focus:border-indigo-600 focus:outline-none focus:ring-1 focus:ring-indigo-600 rounded-lg px-3 py-3 text-md w-1/2 bg-transparent text-white"
+                  value={minPrice}
+                  onChange={(e) => setMinPrice(e.target.value)}
+                  min={1}
+                />
+              </div>
             </div>
-            <div>
-              <label htmlFor="price" className="mr-2 font-semibold text-white">
-                Min Price:
-              </label>
-              <input
-                type="number"
-                id="price"
-                className="px-2 py-1 text-gray-800 bg-white rounded-md"
-                value={minPrice}
-                onChange={(e) => setMinPrice(e.target.value)}
-              />
-            </div>
+            <button
+              className="px-3 py-3 font-medium text-white duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
+              onClick={() => onOpenAddModal()}
+            >
+              {t("Add Product")}
+            </button>
+            {/* Add Product Modal */}
+            <Modal
+              isOpen={isOpenAddModal}
+              closeModal={onCloseAddModal}
+              title={t("Add a new Product")}
+            >
+              {currentStep === 1 && (
+                <form className="space-y-3">
+                  <input
+                    className="border-[1px] border-gray-300 shadow-md focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-3 text-md w-full"
+                    type="text"
+                    placeholder={t("title")}
+                    value={formData.title}
+                    onChange={(e) => handleChange(e)}
+                    name="title"
+                  />
+                  {errors.title && <p className="text-red-600">{errors.title}</p>}
+                  <input
+                    className="border-[1px] border-gray-300 shadow-md focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-3 text-md w-full"
+                    type="number"
+                    placeholder={t("price")}
+                    value={formData.price}
+                    onChange={(e) => handleChange(e)}
+                    name="price"
+                  />
+                  {errors.price && <p className="text-red-600">{errors.price}</p>}
+                  <button
+                    className="px-3 py-3 font-medium duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
+                    onClick={handleNextStep}
+                    disabled={Object.keys(errors).length > 0}
+                  >
+                    {t("Next")}
+                  </button>
+                </form>
+              )}
+              {currentStep === 2 && (
+                <form className="space-y-3">
+                  <input
+                    className="border-[1px] border-gray-300 shadow-md focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-3 text-md w-full"
+                    type="text"
+                    placeholder={t("Description")}
+                    value={formData.description}
+                    onChange={(e) => handleChange(e)}
+                    name="description"
+                  />
+                  {errors.description && (
+                    <p className="text-red-600">{errors.description}</p>
+                  )}
+                  <input
+                    className="border-[1px] border-gray-300 shadow-md focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 rounded-lg px-3 py-3 text-md w-full"
+                    type="text"
+                    placeholder={t("Image URL")}
+                    value={formData.image}
+                    onChange={(e) => handleChange(e)}
+                    name="image"
+                  />
+                  {errors.image && <p className="text-red-600">{errors.image}</p>}
+                  <button
+                    className="px-3 py-3 font-medium text-white duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
+                    onClick={handlePrevStep}
+                  >
+                    {t("Previous")}
+                  </button>
+                  <button
+                    className="px-3 py-3 mx-5 font-medium text-white duration-200 bg-indigo-700 rounded-lg hover:bg-indigo-800"
+                    onClick={handleAddProduct}
+                    disabled={Object.keys(errors).length > 0}
+                  >
+                    {t("Add product")}
+                  </button>
+                </form>
+              )}
+            </Modal>
           </div>
 
           {/* Product List */}
@@ -150,7 +330,7 @@ export default function Cards() {
                     className="p-3 mt-3 font-bold text-white bg-orange-500 rounded-xl hover:scale-105"
                     onClick={() => handleAddToCart(product)}
                   >
-                    Add to Cart
+                    {t("Add to Cart")}
                   </button>
                 </div>
               </div>
@@ -158,7 +338,7 @@ export default function Cards() {
           </div>
 
           {/* Pagination */}
-          <Pagination
+          <Paginator
             productsPerPage={productsPerPage}
             totalProducts={filteredProducts.length}
             paginate={paginate}
@@ -168,29 +348,3 @@ export default function Cards() {
     </div>
   );
 }
-
-// Pagination component (same as previous code)
-const Pagination = ({ productsPerPage, totalProducts, paginate }) => {
-  const pageNumbers = [];
-
-  for (let i = 1; i <= Math.ceil(totalProducts / productsPerPage); i++) {
-    pageNumbers.push(i);
-  }
-
-  return (
-    <nav className="flex justify-center mt-4">
-      <ul className="flex items-center">
-        {pageNumbers.map((number) => (
-          <li key={number}>
-            <button
-              onClick={() => paginate(number)}
-              className="px-4 py-2 mx-1 font-semibold text-white bg-gray-700 rounded-md hover:bg-gray-600 focus:outline-none focus:bg-gray-600"
-            >
-              {number}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-};

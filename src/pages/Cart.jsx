@@ -1,7 +1,9 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { removeFromCart, increaseQuantity, decreaseQuantity } from '../redux/cartSlice';
+import { removeFromCart, increaseQuantity, decreaseQuantity , clearCart} from '../redux/cartSlice';
+import { useTranslation } from 'react-i18next';
 
 function Cart() {
+  const { t } = useTranslation();
   const cart = useSelector(state => state.cart);
   const dispatch = useDispatch();
 
@@ -25,13 +27,13 @@ function Cart() {
 
   // Function to handle checkout
   const handleCheckout = () => {
-    // Add logic for checkout here
-    console.log("Checkout button clicked!");
+    dispatch(clearCart());
+    alert("check out sucessefully ")
   };
 
   return (
     <div style={{ minHeight: "91vh" }} className="font-bold text-white bg-gray-800">
-      <h1 className="mb-10 text-2xl font-bold text-center">Cart Items</h1>
+      <h1 className="mb-10 text-2xl font-bold text-center">{t("Cart Items")}</h1>
       <div className="justify-center max-w-5xl px-6 mx-auto md:flex md:space-x-6 xl:px-0">
         <div className="rounded-lg md:w-2/3">
           {cart.products.map(product => (
@@ -51,18 +53,17 @@ function Cart() {
                   <div className="flex items-center space-x-4 text-black">
                     <p className="text-sm">${product.price.toFixed(2)}</p>
                     <p className="text-sm">${product.total.toFixed(2)}</p>
-                    <button className="text-sm text-red-500" onClick={() => handleRemoveFromCart(product.id)}>Remove</button>
+                    <button className="text-sm text-red-500" onClick={() => handleRemoveFromCart(product.id)}>{t("Remove")}</button>
                   </div>
                 </div>
               </div>
             </div>
           ))}
           <div className="mt-6 text-center">
-            <button className="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600" onClick={handleCheckout}>Checkout</button>
-            <p className="mt-2 text-lg font-semibold">Total: ${total.toFixed(2)}</p>
+            <button className="px-4 py-2 text-white bg-blue-500 rounded-md hover:bg-blue-600" onClick={handleCheckout}>{t("Checkout")}</button>
+            <p className="mt-2 text-lg font-semibold">{t("Total")}: ${total.toFixed(2)}</p>
           </div>
         </div>
- 
       </div>
     </div>
   );

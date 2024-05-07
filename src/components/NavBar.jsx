@@ -1,7 +1,11 @@
 import { ShoppingCart } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import i18next from "i18next";
+import { useTranslation } from "react-i18next";
+
 
 export default function NavBar() {
+  const { t } = useTranslation();
   return (
     <div className="sticky top-0 z-10 flex items-center justify-between py-3 text-white bg-gray-900 px-36">
       <NavLink to={"/"} className="flex items-center gap-2">
@@ -10,12 +14,25 @@ export default function NavBar() {
           alt="logo"
           className="w-10 h-10 rounded-full"
         />
-        <h1 className="text-lg font-semibold">Nafith E-C</h1>
+        <h1 className="text-lg font-semibold">{t("Nafith E-Commerce")}</h1>
       </NavLink>
-      <NavLink to={"/cart"} className="flex items-center gap-2">
-        <ShoppingCart size={30} />
-        <span>Cart</span>
-      </NavLink>
+      <div className="flex items-center gap-5">
+        <NavLink to={"/cart"} className="flex items-center gap-2">
+          <ShoppingCart size={30} />
+          <span className="text-sm">{t("Cart")}</span>
+        </NavLink>
+        <div className="lang">
+          <select
+            onChange={(e) => {
+              i18next.changeLanguage(e.target.value);
+            }}
+            className="px-3 py-1 text-white bg-gray-800 border border-gray-700 rounded"
+          >
+            <option value="en">{t("English")}</option>
+            <option value="ar">{t("Arabic")}</option>
+          </select>
+        </div>
+      </div>
     </div>
   );
 }
