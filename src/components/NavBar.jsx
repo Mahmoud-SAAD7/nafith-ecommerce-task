@@ -6,9 +6,9 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import HttpApi from "i18next-http-backend";
-import { useEffect, useState } from "react"; // Import useState
+import { useEffect, useState } from "react"; 
 import Cookies from "js-cookie";
-import { useSelector } from "react-redux"; // Import useSelector from Redux
+import { useSelector } from "react-redux";
 
 i18n
   .use(initReactI18next)
@@ -37,11 +37,18 @@ export default function NavBar() {
     window.document.dir = i18n.dir(lng);
     i18n.changeLanguage(lng);
   }, [lng]);
+// get token from local storage
+
 
   useEffect(() => {
-    // Calculate total number of products in the cart
-    const totalCount = cart.products.reduce((acc, product) => acc + product.quantity, 0);
-    setCartItemCount(totalCount); // Update cart item count state
+    const storageKey = "cart";
+    const userCartString = localStorage.getItem(storageKey);
+    const userCart = userCartString ? JSON.parse(userCartString) : null;
+    if(userCart){
+      setCartItemCount(userCart.products.length);
+    }else{
+      setCartItemCount(0);
+    }
   }, [cart]);
 
   const handleChangeLanguage = (e) => {
